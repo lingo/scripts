@@ -1,0 +1,7 @@
+#!/bin/bash
+if [ "x$1" != "x" ]; then
+	dir="$1"
+else
+	dir="$PWD"
+fi
+(cd "$dir"; svn info | grep URL: | awk '{print $2}' )

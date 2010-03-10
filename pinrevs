@@ -1,0 +1,29 @@
+#!/bin/bash
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
+	echo -e "Usage: $0 [-y]\n -y will actually set svn:externals, rather than only echoing"
+	exit 1
+fi
+
+function doit() {
+	svn pg svn:externals . | \
+		perl -a -ne '
+		if (/^#/ || /\s+ -r \s* \d+/x) {
+			print;
+			next;
+		}
+		if ($F[1]) {
+			$rev = qx{ cd $F[0]; svn info | grep "Last Changed Rev" };
+			chomp $rev;
+			$rev =~ s/.*?:\s*//;
+			print "$F[0]\t-r $rev\t$F[1]\n"; 
+		} else {
+			print join(" ",@F) . "\n";
+		}'
+}
+
+if [ "$1" = "-y" ]; then
+doit | svn ps -F - svn:externals .
+else
+doit;
+fi
+

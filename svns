@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+use Term::ANSIColor;
+use Carp;
+use warnings;
+use strict;
+
+my %colormap = (
+	'D'	=>	'red',
+	'M'	=>	'yellow',
+	'A'	=>	'green',
+);
+
+for (qx{svn status}) {
+	if (/^.\s+.+$/) {
+		my ($status, $rest) = split;
+		next if $status eq 'X';
+		my $col = $colormap{$status};
+		if ($col) {
+			print colored [$col], "$status\t$rest";
+		} else {
+			print "$status\t$rest";
+		}
+		print "\n";
+	} elsif (/Performing status on/) {
+		print colored ['blue'], $_;
+	} else {
+		print $_
+	}
+}
