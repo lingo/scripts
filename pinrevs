@@ -4,10 +4,18 @@ if [ "$1" = "-h" -o "$1" = "--help" ]; then
 	exit 1
 fi
 
+if [ "$1" = "-u" ]; then
+	mod="$2"
+	svn pg svn:externals . | sed "/$mod/s/-r[ \\t]\\+[0-9]\\+//"
+	#| svn ps -F - svn:externals .
+	echo "Unpinned"
+	exit
+fi
+
 function doit() {
 	svn pg svn:externals . | \
 		perl -a -ne '
-		if (/^#/ || /\s+ -r \s* \d+/x) {
+		if (/^#/ || /\s+ -r \s* r? \d+/x) {
 			print;
 			next;
 		}
