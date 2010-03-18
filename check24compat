@@ -90,6 +90,9 @@ my $rx = join('|', (
 		join('|', @other),
 	));
 
+qx{which ack} or die "Requires 'ack'.  Try: port install p5-app-ack, or apt-get install ack-grep\n";
+
+
 print "## Things to check for 2.4 compatibility\n";
 print "## See http://doc.silverstripe.org/doku.php?id=upgrading:2.4.0\n\n";
 system('ack', $rx, '--php');
