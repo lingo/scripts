@@ -1,0 +1,95 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+
+my $dir = $ARGV[0] || '.';
+
+my @classes = qw{
+	AjaxFormAction
+	BankAccountField
+	CalendarDateField
+	CompositeDateField
+	CompositeDateField
+	DMYDateField
+	ConfirmedFormAction
+	DMYDateField
+	DropdownTimeField
+	Email_Template
+	GSTNumberField
+	GhostPage
+	HiddenFieldGroup
+	PDODatabase
+	PermissionDropdownField
+	PopupDateTimeField
+	ReportField
+	TypeDropdown
+};
+
+my @statics = qw{
+	Director::currentPage
+	Director::Link
+	Database::alteration_message
+	LeftAndMain::add_menu_item
+	ContentNegotiator::disable
+	RootURLController::get_homepage_urlsegment
+	SiteTree::get_by_url
+};
+
+my @instance = qw{
+	->fieldExists
+	->listOfFields
+	->Tag
+	->URL
+	->val
+	->ajax_render
+	->MemberData
+	->removeByFilter
+	->loadUploaded
+	->loadUploaded
+	->filter_map
+	->map_multiple
+};
+
+my @renamed = qw{
+	Report
+	HTTPRequest
+	HTTPResponse
+	HTTPResponse_Exception
+	Database
+	Query
+	SSDateTime
+	Backtrack
+	Cli
+	Log
+	LogEmailWriter
+	LogErrorEmailFormatter
+	LogErrorFileFormatter
+	LogFileWriter
+	ZendLog
+	HTMLValue
+};
+
+my @other = qw{
+	$add_action
+	getReportClassNames
+	$_SERVER
+};
+
+@classes = map { '\b' . $_ . '\b' } @classes;
+@statics = map { '\b' . $_ . '\b' } @statics;
+@instance = map { '\b' . $_ . '\b' } @instance;
+@renamed = map { '\b' . $_ . '\b' } @renamed;
+@other = map { '\b' . $_ . '\b' } @other;
+
+
+my $rx = join('|', (
+		join('|', @classes),
+		join('|', @statics),
+		join('|', @instance),
+		join('|', @renamed),
+		join('|', @other),
+	));
+
+print "## Things to check for 2.4 compatibility\n";
+print "## See http://doc.silverstripe.org/doku.php?id=upgrading:2.4.0\n\n";
+system('ack', $rx, '--php');
