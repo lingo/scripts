@@ -1,0 +1,13 @@
+#!/bin/bash
+svn diff -N . > .difs
+SED=$(which sed)
+which gsed >/dev/null && SED=$(which gsed)
+cat .difs | $SED -n '/^\s*- /,/^\s*+/ { /^\s*+/b; /^\s*$/d; s/^\s*[+-]//; p }' > .b4
+cat .difs | $SED -n '/^\s*+/,$ { /^\s*$/d; s/^\s*[+-]//; p }' > .after
+rm .difs
+if [ -f $(which colordiff) ]; then
+	colordiff -u .b4 .after
+else
+	diff -u .b4 .after
+fi
+rm .b4 .after
