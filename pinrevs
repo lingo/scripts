@@ -1,4 +1,8 @@
 #!/bin/bash
+sed=$(which sed)
+if [ -n $(which gsed) ]; then
+	sed=$(which gsed)
+fi
 if [ "$1" = "-h" -o "$1" = "--help" ]; then
 	echo -e "Usage: $0 [-y]\n -y will actually set svn:externals, rather than only echoing"
 	exit 1
@@ -6,9 +10,13 @@ fi
 
 if [ "$1" = "-u" ]; then
 	mod="$2"
-	svn pg svn:externals . | sed "/$mod/s/-r[ \\t]\\+[0-9]\\+//"
-	#| svn ps -F - svn:externals .
-	echo "Unpinned"
+	mod=${mod/\//}
+	if [ "x$mod" = "x" ]; then
+		svn pg svn:externals . | $sed "s/-r[ \\t]\\+[0-9]\\+//" |  svn ps -F - svn:externals .
+	else
+		svn pg svn:externals . | $sed "/$mod/s/-r[ \\t]\\+[0-9]\\+//" |  svn ps -F - svn:externals .
+	fi
+	echo "Unpinned $mod"
 	exit
 fi
 
