@@ -1,0 +1,69 @@
+4a5,6
+> export PATH="$PATH:/sbin:/usr/sbin:~/bin"
+> 
+18a21,24
+> export HISTCONTROL=ignoredups
+> # ... and ignore same sucessive entries.
+> export HISTCONTROL=ignoreboth
+> 
+31,34c37,39
+< # set a fancy prompt (non-color, unless we know we "want" color)
+< case "$TERM" in
+<     xterm-color) color_prompt=yes;;
+< esac
+---
+> if [ "$COLORTERM" == "gnome-terminal" ]; then
+>     export TERM=xterm-256color
+> fi 
+35a41
+> color_prompt=yes
+62c68
+<     PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+---
+>     PROMPT_COMMAND='echo -ne "\033]0;${USER}@${HOSTNAME}: ${PWD/$HOME/~}\007"'
+69,70c75,76
+< if [ -x /usr/bin/dircolors ]; then
+<     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+---
+> if [ "$TERM" != "dumb" ] && [ -x /usr/bin/dircolors ]; then
+>     eval "`dircolors -b`"
+72,73c78,79
+<     #alias dir='dir --color=auto'
+<     #alias vdir='vdir --color=auto'
+---
+>     #alias dir='ls --color=auto --format=vertical'
+>     #alias vdir='ls --color=auto --format=long'
+75,91c81,83
+<     alias grep='grep --color=auto'
+<     alias fgrep='fgrep --color=auto'
+<     alias egrep='egrep --color=auto'
+< fi
+< 
+< # some more ls aliases
+< alias ll='ls -lhF'
+< #alias la='ls -A'
+< #alias l='ls -CF'
+< 
+< # Alias definitions.
+< # You may want to put all your additions into a separate file like
+< # ~/.bash_aliases, instead of adding them here directly.
+< # See /usr/share/doc/bash-doc/examples in the bash-doc package.
+< 
+< if [ -f ~/.bash_aliases ]; then
+<     . ~/.bash_aliases
+---
+>     #alias grep='grep --color=auto'
+>     #alias fgrep='fgrep --color=auto'
+>     #alias egrep='egrep --color=auto'
+97c89
+< if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+---
+> if [ -f /etc/bash_completion ]; then
+99a92,98
+> 
+> if [ -f $HOME/.sh_aliases ]; then
+> 	. $HOME/.sh_aliases
+> fi
+> if [ -f $HOME/.sh_func ]; then
+> 	. $HOME/.sh_func
+> fi
