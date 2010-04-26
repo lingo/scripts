@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+use warnings;
+use strict;
+use Data::Dumper;
+use File::Basename;
+use Getopt::Long;
+
+my ($outdir, $help, $force);
+my $usage = "Usage: $0 [-o|--output-dir <DIR>]  <SOURCE_FILE.php>\n";
+
+die $usage unless @ARGV;
+
+GetOptions(
+	'output-dir=s' => \$outdir,
+	'force'	=> \$force,
+	'help' => \$help)
+	or die $usage;
+
+if ($help) {
+	die $usage;
+}
+
+### Parse args ###
+my $fn = $ARGV[0];
+my $fn_out = basename($fn);
+$outdir ||= dirname($fn) . '/tests';
+$fn_out =~ s/\.php/Test$&/;
+$fn_out = $outdir .'/'. $fn_out;
+
+
+my %classes = ();
+my $lastclass; # Most recent class, used for assigning methods found
+
+### Read input file ###
+open my $fh, '<', $fn
+	or die $!;
+while (<$fh>) {
+	/\bclass\s+(\w+)\s+.*\{/ && do {
+		$classes{$1} = [];
+		$lastclass = $1;
+	};
+	/\bfunction\s+(\w+)\s*\(/ && do {
+		if ($lastclass) {
+			push @{$classes{$lastclass}}, $1;
+		}
+	};
+}
+close $fh;
+
+
+
+### Write output file ###
+if ( -f $fn_out && !$force) {
+	die "$fn_out already exists; not overwriting.\n";
+}
+open my $fh_out, '>', $fn_out
+	or die "Failed to create $fn_out : $!";
+
+print $fh_out  "<?php\n\n";
+for my $class (sort keys %classes) {
+	print $fh_out  qq[
+/**
+ * Test the class \@see ${class}
+ * \@covers ${class}
+ */
+class ${class}Test extends SapphireTest {
+	// static \$fixture_file = '.yml';
+
+	/**
+	 * Setup any fixture items, etc.
+	 */
+	public function setUp() {
+		parent::setUp();
+		\$this->object = new ${class}();
+	}
+
+];
+	for my $fn (sort @{$classes{$class}}) {
+		my $fnUpper = $fn;
+		$fnUpper =~ s/^(.)/\u$1/;
+		print $fh_out qq[
+	/**
+	 * Test the function \@see ${class}::${fn}
+	 * \@covers ${class}::${fn}
+	 */
+	function test${fnUpper}() {
+		// \$this->markTestSkipped('This test has not been implemented yet.');
+		throw new PHPUnit_Framework_IncompleteTestError('This test has not been implemented yet.');
+
+	}
+
+];
+		# instead of skip, can: throw new PHPUnit_Framework_IncompleteTestError('This test has not been implemented yet.');
+	}
+	print $fh_out  "\n}\n\n\n";
+}
+print $fh_out  "\n?>";
+close $fh_out;
+print "Wrote to $fn_out\n";
+
