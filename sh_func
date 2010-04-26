@@ -1,0 +1,20 @@
+function        q() {
+    [ $# -eq 0 ] && echo "Usage: q command" && return
+    "$@" >/dev/null 2>&1 &
+}
+
+function finame () {
+    name="*$1*"
+    shift
+    find . -iname $name $*
+}
+function firegex() {
+    find . -regextype egrep -regex "$1"
+}
+
+function recent() {
+    arg="$1"
+    shift
+    [ -z "$arg" ] && arg="5"
+    ll -ct $* | head "-$arg"
+}
