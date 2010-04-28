@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+# Script to create a buildbot entry from current SVN info
+#
+use warnings;
+use strict;
+
+
+my $project = qx{basename \$PWD};
+chomp $project;
+
+my @components = ();
+my $base = svnwhere();
+
+my @dirs = ();
+
+my $externals = qx{ svn propget svn:externals . };
+$externals = [ split /\n+/, $externals ];
+for (@$externals) {
+	push @dirs,  (split /\s+/)[0];
+}
+for my $dir (@dirs) {
+	my $mod = svnwhere($dir);
+	push @components, $mod if $mod;
+}
+
+print qq%
+	'$project': {
+		'base': '$base',
+		'components' : [
+			'@{[ join("',\n\t\t\t'", @components) ]}'
+			],
+		'notify': [
+			'luke\@silverstripe.com'
+			]
+	}
+%;
+
+sub svnwhere {
+	my ($dir) = @_;
+	$dir ||= '.';
+	return unless -d "$dir/.svn";
+	my $where = qx{svn info $dir | sed -n 's/URL: //p'};
+	chomp $where;
+	return $where;
+}
