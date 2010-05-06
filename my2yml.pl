@@ -35,7 +35,10 @@ for my $table (@$tables) {
 	my $cstr = join(',', map { qq|"$_"| } @cols);
 	#print Dumper($vstr);
 
-	print "\n$table:\n";
+	my $count = $mydb->selectrow_array(qq{ SELECT COUNT(*) FROM `$table` });
+	if ($count) {
+		print "\n$table:\n";
+	}
 	my $stm = $mydb->prepare(qq{ SELECT * FROM `$table` ORDER BY ID });
 	$stm->execute();
 	while (my $row = $stm->fetchrow_hashref()) {	
