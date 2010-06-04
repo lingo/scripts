@@ -14,7 +14,7 @@ if [ "$1" = "-u" ]; then
 	if [ "x$mod" = "x" ]; then
 		svn pg svn:externals . | $sed "s/-r[ \\t]\\+[0-9]\\+//" |  svn ps -F - svn:externals .
 	else
-		svn pg svn:externals . | $sed "/$mod/s/-r[ \\t]\\+[0-9]\\+//" |  svn ps -F - svn:externals .
+		svn pg svn:externals . | $sed "/\b$mod\b/s/-r[ \\t]\\+[0-9]\\+//" |  svn ps -F - svn:externals .
 	fi
 	echo "Unpinned $mod"
 	exit
