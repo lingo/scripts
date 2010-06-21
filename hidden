@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Show/hide hidden files on OSX
+# Usage: hidden <show|hide>
+#
+if [ "$1" = "hide" ]; then
+	defaults write com.apple.finder AppleShowAllFiles FALSE
+	killall Finder
+elif [ "$1" = "show" ]; then
+	defaults write com.apple.finder AppleShowAllFiles TRUE
+	killall Finder
+else
+	echo "Usage: $0 <show|hide>"
+	exit 1
+fi

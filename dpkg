@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Rough equivalent of debian's dpkg
+
+if [ "$1" = "-L" ]; then
+	pkgutil --files "$2"
+else
+	pkgutil --pkgs=".*$2.*"
+fi

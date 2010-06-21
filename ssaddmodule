@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Add a new module to a SilverStripe checkout.
+# Usage:
+# 	ssaddmodule [-n]  [modulename]  [modulename:branches/0.2] [modulename:tags/0.1rc2]
+# Options:
+#	-n	Do not add module to the svn:externals
+#
+
+
+function usage() {
+	echo "Usage: $0 [-n] module [module ..]"
+	exit 1
+}
+
+while getopts "nh" opt; do
+	case $opt in
+		n)
+			NOADD=1	
+			;;
+		h)
+			usage
+			;;
+	esac
+done
+
+
+TMPFILE="/tmp/.$(basename $0).prop"
+
+> $TMPFILE # Clear it
+
+SUCCESS=1
+
+svn pg svn:externals . > $TMPFILE
+
+while [ $# -ge 1 ]; do
+	MODULE="$1"
+	shift
+	URL="http://svn.silverstripe.com/open/modules/$MODULE/trunk"
+	echo "Seeking $MODULE at $URL"
+	curl -f -I -s "$URL" > /dev/null;
+	if [ $? -ne 0 ]; then
+		echo "module $MODULE not found"
+		SUCCESS=0
+		continue
+	fi
+	if $(grep -q $MODULE $TMPFILE); then
+		echo "$MODULE already there"
+	else 
+		sed -i -e '/^$/d' $TMPFILE
+		echo -e "$MODULE/\t $URL" >> $TMPFILE
+	fi
+
+done
+
+if [ $SUCCESS -eq 1 ]; then
+	cat $TMPFILE
+	svn ps svn:externals --file $TMPFILE .
+	echo
+	echo
+	svn up
+	echo
+fi
+rm $TMPFILE
