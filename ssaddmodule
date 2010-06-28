@@ -9,14 +9,16 @@
 
 
 function usage() {
-	echo "Usage: $0 [-n] module [module ..]"
+	echo "Usage: $0 [-n] module[:branch] [module ..]"
 	exit 1
 }
 
+NOADD=0
 while getopts "nh" opt; do
 	case $opt in
 		n)
 			NOADD=1	
+			shift;
 			;;
 		h)
 			usage
@@ -24,6 +26,9 @@ while getopts "nh" opt; do
 	esac
 done
 
+if [ $# -lt 1 ]; then
+	usage
+fi
 
 TMPFILE="/tmp/.$(basename $0).prop"
 
@@ -31,12 +36,21 @@ TMPFILE="/tmp/.$(basename $0).prop"
 
 SUCCESS=1
 
-svn pg svn:externals . > $TMPFILE
+if [ $NOADD -eq 0 ]; then
+	svn pg svn:externals . > $TMPFILE
+fi
+
+WHERE=${WHERE=/open}
 
 while [ $# -ge 1 ]; do
 	MODULE="$1"
+	BRANCH=${MODULE/*:/}
+	if [ "$BRANCH" = "$MODULE" ]; then
+		BRANCH='trunk'
+	fi
+	MODULE=${MODULE/:*/}
 	shift
-	URL="http://svn.silverstripe.com/open/modules/$MODULE/trunk"
+	URL="http://svn.silverstripe.com${WHERE}/modules/$MODULE/$BRANCH"
 	echo "Seeking $MODULE at $URL"
 	curl -f -I -s "$URL" > /dev/null;
 	if [ $? -ne 0 ]; then
@@ -44,21 +58,32 @@ while [ $# -ge 1 ]; do
 		SUCCESS=0
 		continue
 	fi
-	if $(grep -q $MODULE $TMPFILE); then
-		echo "$MODULE already there"
-	else 
-		sed -i -e '/^$/d' $TMPFILE
-		echo -e "$MODULE/\t $URL" >> $TMPFILE
+	if [ $NOADD -eq 1 ]; then
+		if [ -f $MODULE ]; then
+			echo "$MODULE already there"
+		else
+			echo "Checkout out $URL to $MODULE/"
+			svn co $URL $MODULE >/dev/null
+		fi
+	else
+		if $(grep -q $MODULE $TMPFILE); then
+			echo "$MODULE already there"
+		else 
+			sed -i -e '/^$/d' $TMPFILE
+			echo -e "$MODULE/\t $URL" >> $TMPFILE
+		fi
 	fi
 
 done
 
 if [ $SUCCESS -eq 1 ]; then
-	cat $TMPFILE
-	svn ps svn:externals --file $TMPFILE .
-	echo
-	echo
-	svn up
-	echo
+	if [ $NOADD -eq 0 ]; then
+		cat $TMPFILE
+		svn ps svn:externals --file $TMPFILE .
+		echo
+		echo
+		svn up
+		echo
+	fi
 fi
 rm $TMPFILE
