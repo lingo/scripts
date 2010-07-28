@@ -1,4 +1,12 @@
 #!/bin/bash
+# Easily pin SVN revisions with svn:externals
+# Can pin/unpin all externals, or only the named one.
+# Can change svn:externals or simply output the text that would be set.
+#
+# Usage:
+#    user@host:~/svn_checkout$ pinrevs [-h | -u [submodule] | -y ] [module ...]
+#
+
 sed=$(which sed)
 if [ -n $(which gsed) ]; then
 	sed=$(which gsed)
