@@ -40,18 +40,24 @@ print Dumper(\$tables);
 
 # Loop through MySQL tables
 for my $table (@$tables) {
+	# Get table fields from MySQL DESC statement
 	my $cols = $mydb->selectall_hashref(qq{ DESC `$table` }, 'Field');
+	# Create the parameter string for SQL
 	my $vstr = '?,' x scalar keys %$cols;
-	$vstr =~ s/,$//;
-	my @cols = sort keys %$cols;
-	my $cstr = join(',', map { qq|"$_"| } @cols);
+	$vstr =~ s/,$//; # Remove final ','
+	my @cols = sort keys %$cols; # Sort table fields by name
+	# Quote each field name and join them with commas
+	my $cstr = join(',', map { qq|"$_"| } @cols); 
 	#print Dumper($vstr);
 
 	my $stm = $mydb->prepare(qq{ SELECT * FROM `$table` ORDER BY ID });
+	# !!Clear SQLite DB table!!
 	$sqlitedb->do(qq{ DELETE FROM "$table" });
+	# Use prepared statement string constructed in previous block
 	print qq{ INSERT INTO "$table" ($cstr) VALUES($vstr) \n};
 	my $inStm = $sqlitedb->prepare(qq{ INSERT INTO "$table" ($cstr) VALUES($vstr) });
 	$stm->execute();
+	# Look through all rows, inserting data from MySQL results into SQLite.
 	while (my $row = $stm->fetchrow_hashref()) {	
 		print Dumper(\$row);
 		for (my $i=1; $i <= @cols; $i++) {
