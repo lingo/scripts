@@ -7,17 +7,23 @@ use Data::Dumper;
 use Carp;
 use Getopt::Std;
 
+# Scan command line arguments.
 our %opt;
 
 getopts('H:u:p:d:s:S:h', \%opt)
 	or usage();
+
+# Show usage if -h was passed
 $opt{h} && usage();
+
+# Set default options if not passed from command line
 $opt{d} || usage();
 $opt{s} || usage();
 $opt{H} ||= 'localhost';
 $opt{S} ||= '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock';
 
-print Dumper(\%opt);
+#print Dumper(\%opt);
+
 my $mydb = DBI->connect("DBI:mysql:database=$opt{d};host=$opt{H};mysql_socket=$opt{S}",
 			$opt{u}, $opt{p},
 			{RaiseError=>1, PrintError=>1}
@@ -28,9 +34,11 @@ my $sqlitedb = DBI->connect("DBI:SQLite:dbname=$opt{s}",
 			{AutoCommit => 0, RaiseError => 1, PrintError => 1});
 
 
+# Get list of tables from MySQL DB
 my $tables = $mydb->selectcol_arrayref(q{ SHOW TABLES });
 print Dumper(\$tables);
 
+# Loop through MySQL tables
 for my $table (@$tables) {
 	my $cols = $mydb->selectall_hashref(qq{ DESC `$table` }, 'Field');
 	my $vstr = '?,' x scalar keys %$cols;
