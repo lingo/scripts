@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Data::Dumper;
+
+my @std = qw{
+	Getopt::Std
+	Carp
+	Data::Dumper
+	File::Spec
+	File::Spec::Functions
+	Cwd
+	File::Basename
+};
+
+my %std = map { $_ => 1 } @std;
+
+
+my @debs;
+my @cpan;
+
+my $args = '"' . join('" "', @ARGV) . '"';
+my @uses = qx{ egrep -h -o '^use\\s+([a-zA-Z_:]+)' $args | sort -u | sed -rn '/warnings|strict|lib/d;s/use\\s+//p' };
+chomp for @uses;
+
+for (@uses) {
+	next if ($std{$_});
+	my $mod = $_;
+	s/::/-/g;
+	s/^/lib/;
+	s/(.+)/\L$1-perl/;
+	my $det = qx(dpkg-query -W -f='\${Installed-Size}' $_ 2>/dev/null);
+	if ($? == 0 && !$det) {
+		push @debs, $_;
+	} elsif($? != 0) {
+		push @cpan, $mod;
+	}
+}
+
+print 'sudo aptitude install ' . join(' ', @debs),"\n" if @debs;
+print 'cpan ' . join(' ', @cpan), "\n" if @cpan;
+
+__END__
+
+ST=$(dpkg-query -W -f='${Package}:${Installed-Size}\n' $i 2>/dev/null)
+if [ $? -eq 0 ]; then
+	ST=${ST#*:}
+	if [ -z "$ST" ]; then
+		DEB="$DEB $i"
+	fi
+else
+	CPAN
+fi
+
+done
+
+if [ -n "$DEB" ]; then
+	echo "sudo aptitude install $DEB"
+fi
+
